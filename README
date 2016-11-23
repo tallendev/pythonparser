@@ -1,0 +1,48 @@
+Name: Tyler Allen
+Clemson Email Address: tnallen@g.clemson.edu
+
+Project no: 5
+Project due date: 11/22/2016
+
+Project description:
+Project was to build on project 4, adding augmented assignment operators:
++=, -=, *=, /=, //=, %=
+
+I have done this as specified. Additionally, I have implemented **= because why
+not. These operations reuse the previously implemented operators for good
+object oriented programming and code reuse.
+
+In order for this to work, I had to introduce a symbol table to store variables.
+This is done as described. The C++ implementation of the symbol table and ast 
+are located in appropriate cpp files. This is to avoid any unnecessary abstraction
+related to circular dependencies. This is also technically following the C++ spec?
+
+The code still uses lambda expressions, although the raw operators have been
+replaced by Ast objects. Needs C++11 supporting compiler for this. Not used in
+all cases because reassigning lambdas as function pointers is not allowed
+on lambdas with closures :(
+
+Each operation has its own unique operation. There are 4 classes of operation, Binary, Unary,
+Assign, and Val. Val isn't true an operation, but it contains the types: int, double, and
+a special name class referring to a symbol. 
+
+The implementation waits as long as possible to evaluate the expressions. It tries
+to only evaluate expressions for currently-implemented operations. For illegal 
+operations, or unimplemented operations, an exception will be thrown. This will
+break out of the abstract syntax tree, but will not disrupt the grammar parsing.
+An appropriate error message will be displayed.
+
+Because of this, alltest still works. Additionally, test.py contains a number
+of automatic and manual-checking test cases. 
+
+Also, so long as the program has not yet reached an errored state, a .gv
+file will be produced with the graph of each statement thus far. It's somewhat buggy in that
+it produces an extra tree on each page containing garbage but also the result
+for each variable. It's sort of neat to play around with. Use this for a pdf:
+dot -Tps2 ast0.gv -o ast0.ps | ps2pdf ast0.ps
+
+All supported operations are memory-leak free. To support some operations, additional
+intermediate result nodes are created. These are destroyed after they are no longer useful. 
+
+Test cases include small details like rounding down for negative floats, division by zero,
+precision issues, etc.
