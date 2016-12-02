@@ -32,6 +32,32 @@ void AstVal::print_node(const std::string& s) const
     ast_out << NODE_ID << "[label=\"" << s << "\"]" << std::endl;
 }
 
+AstSuite::AstSuite(Ast* node) : AstNode(node, nullptr) {}
+AstSuite::AstSuite(Ast* node, AstSuite* nnode) : AstNode(node, nnode) {}
+AstSuite::~AstSuite() { delete getLeft(); if(getRight()) delete getRight(); }
+void AstSuite::print_node(const std::string& s) const { }
+AstVal* AstSuite::eval()
+{
+    if (!getLeft())
+    {
+        throw unsupported_exception();
+    }
+    delete getLeft()->eval();
+    AstVal* ret = nullptr;
+    if (getRight())
+    {
+        ret = getRight()->eval();
+    }
+    return ret;
+}
+
+// AstReturn
+AstReturn::AstReturn(Ast* node) : AstSuite(node) {};
+AstVal* AstReturn::eval()
+{
+    return getLeft()->eval();
+}
+
 //AstName
 AstName::AstName(std::string* str) : name(str) {}
 AstName::~AstName() { delete name; }
@@ -78,6 +104,31 @@ int AstName::isFloat()
         delete val;
     }
     return out;
+}
+
+//AstStr
+AstStr::AstStr(std::string* string) : str(string) {}
+AstStr::AstStr(std::string& string) : str(new std::string(string)) {}
+AstStr::~AstStr() { delete str; }
+
+AstVal* AstStr::eval() 
+{ 
+    return new AstStr(*str); 
+}
+
+double AstStr::castToDouble()
+{
+    throw unsupported_exception();
+}
+
+int AstStr::castToInt()
+{
+    throw unsupported_exception();
+}
+
+int AstStr::isFloat()
+{
+    return 0;
 }
 
 //AstInt
@@ -225,7 +276,8 @@ AstVal* AstAssign::eval()
 //AstUnary
 AstUnary::AstUnary(Ast* l) : AstNode(l, NULL) {}
 // deletes l node for unary ops
-AstUnary::~AstUnary() { delete getLeft(); }
+AstUnary::~AstUnary() { if(getLeft()) delete getLeft(); }
+
 void AstUnary::print_node(const std::string& s) const
 {
     ast_out << NODE_ID << "[label=\"" << s << "\"]" << std::endl;
@@ -564,4 +616,43 @@ AstVal* AstUNot::real_eval(int l)
 AstVal* AstUNot::real_eval(double l)
 {
     throw tilde_exception();
+}
+
+//AstPrint
+AstPrint::AstPrint(Ast* l): AstUnary(l) {}
+
+AstVal* AstPrint::eval()
+{
+    AstVal* v = NULL;
+    // can be replaced with string class if setLeft() implemented
+    if (getLeft() == NULL)
+    {
+        std::cout << std::endl;                        
+    }
+    else
+    {
+        v = AstUnary::eval();
+    }
+    return v;
+}
+
+AstVal* AstPrint::real_eval(int l)
+{
+    std::cout << l << std::endl;
+    print_node("print");
+    return NULL;
+}
+AstVal* AstPrint::real_eval(double l)
+{
+    if (l == (double)(int)l)
+    {
+        std::cout << std::setprecision(1) << std::fixed << l << std::endl;
+        std::cout.unsetf(std::ios_base::fixed);
+    }
+    else
+    {
+        std::cout << std::setprecision(12) << l << std::endl;
+    }
+    print_node("print");
+    return NULL;
 }

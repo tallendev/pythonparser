@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <math.h>
 #include <string>
@@ -48,6 +49,20 @@ class AstName : public AstVal
         std::string* name;
 };
 
+class AstStr : public AstVal
+{
+    public:
+        AstStr(std::string* str);
+        AstStr(std::string& str);
+        ~AstStr();
+        virtual AstVal* eval();
+        virtual double castToDouble();
+        virtual int castToInt();
+        virtual int isFloat();
+    private:
+        std::string* str;
+};
+
 class AstInt : public AstVal
 {
     public:
@@ -86,6 +101,24 @@ class AstNode : public Ast
         Ast *l;
         Ast *r;
 };
+
+class AstSuite : public AstNode
+{
+    public:
+        AstSuite(Ast* node);
+        AstSuite(Ast* node, AstSuite* nnode);
+        ~AstSuite();
+        virtual AstVal* eval();
+        virtual void print_node(const std::string& s) const;
+};
+
+class AstReturn: public AstSuite
+{
+    public:
+        AstReturn(Ast* Node);
+        virtual AstVal* eval();
+};
+
 
 // Binary operations
 class AstBinary : public AstNode 
@@ -285,6 +318,16 @@ class AstUNot : public AstUnary
 {
     public:
         AstUNot(Ast* l);
+    private:
+        virtual AstVal* real_eval(int l);
+        virtual AstVal* real_eval(double l);
+};
+
+class AstPrint: public AstUnary
+{
+    public:
+        AstPrint(Ast* l);
+        virtual AstVal* eval();
     private:
         virtual AstVal* real_eval(int l);
         virtual AstVal* real_eval(double l);

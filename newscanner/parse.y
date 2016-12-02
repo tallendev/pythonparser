@@ -8,7 +8,6 @@
   #include <vector>
   #include <memory>
   #include <cstring>
-  #include <iomanip>
   #include "except.h"
 	int yylex (void);
 	extern int yylineno;
@@ -160,12 +159,21 @@ stmt // Used in: pick_NEWLINE_stmt, plus_stmt
             except_list.clear();
         }
     }
-	;
 	| compound_stmt
     {
         if ($1)
         {
-            delete $1;
+            try
+            {
+                ast_out << "digraph ast" << num_calclist++ << " {" << std::endl;
+                delete $1->eval();
+                ast_out << "}" << std::endl;;
+                delete $1;
+            }
+            catch (std::exception& e)
+            {
+                except_list.push_back(e.what());
+            }
         }
         // if there are exceptions, print the first and dump all
         if (!except_list.empty())
@@ -179,11 +187,11 @@ simple_stmt // Used in: single_input, stmt, suite
 	: small_stmt small_stmt_STAR_OR_SEMI NEWLINE
 	;
 small_stmt // Used in: simple_stmt, small_stmt_STAR_OR_SEMI
-	: expr_stmt 
-	| print_stmt
+	: expr_stmt { $$ = $1; }
+	| print_stmt { $$ = $1; }
 	| del_stmt { $$ = 0; }
 	| pass_stmt { $$ = 0; }
-	| flow_stmt { $$ = 0; }
+	| flow_stmt { $$ = $1; }
 	| import_stmt { $$ = 0; }
 	| global_stmt { $$ = 0; }
 	| exec_stmt { $$ = 0; }
@@ -271,44 +279,7 @@ augassign // Used in: expr_stmt
 print_stmt // Used in: small_stmt
 	: PRINT opt_test 
     {
-        if ($2)
-        {
-            // if there are no exceptions, printing is ok
-            try
-            {
-                ast_out << "digraph ast" << num_calclist++ << " {" << std::endl;
-                AstVal* val = $2->eval();
-                ast_out << "}" << std::endl;
-                if (val->isFloat())
-                {
-                    double out = val->castToDouble();
-                    if (out == (double)(int)out)
-                    {
-                        std::cout << std::setprecision(1) << std::fixed << out << std::endl;
-                        std::cout.unsetf(std::ios_base::fixed);
-                    }
-                    else
-                    {
-                        std::cout << std::setprecision(12) << out << std::endl;
-                    }
-                }
-                else
-                {
-                    std::cout << val->castToInt() << std::endl;
-                }
-                delete val;
-                delete $2;
-            }
-            catch (std::exception& e)
-            {
-                except_list.push_back(e.what());
-            }
-        }
-        else
-        {
-            std::cout << std::endl;
-        }
-        $$ = 0;
+        $$ = new AstPrint($2);
     }
 	| PRINT RIGHTSHIFT test opt_test_2
 	;
@@ -329,7 +300,7 @@ pass_stmt // Used in: small_stmt
 flow_stmt // Used in: small_stmt
 	: break_stmt
 	| continue_stmt
-	| return_stmt
+	| return_stmt { $$ = $1; }
 	| raise_stmt
 	| yield_stmt
 	;
@@ -341,6 +312,9 @@ continue_stmt // Used in: flow_stmt
 	;
 return_stmt // Used in: flow_stmt
 	: RETURN testlist
+    {
+       $$ = new AstReturn($2);
+    }
 	| RETURN
 	;
 yield_stmt // Used in: flow_stmt
@@ -485,7 +459,15 @@ suite // Used in: funcdef, if_stmt, star_ELIF, while_stmt, for_stmt,
 	;
 plus_stmt // Used in: suite, plus_stmt
 	: stmt plus_stmt
+    {
+        $$ = new AstSuite($1, (AstSuite*)$2);
+    }
 	| stmt
+    {
+        // TODO:
+        // causes it to execute immediately which fucks us
+        $$ = new AstSuite($1);
+    }
 	;
 testlist_safe // Used in: list_for
 	: old_test plus_COMMA_old_test
