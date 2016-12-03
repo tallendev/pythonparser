@@ -32,6 +32,7 @@ class AstVal : public Ast
         virtual double castToDouble() = 0;
         virtual int castToInt() = 0;
         virtual int isFloat() = 0;
+        virtual int isFunc() = 0;
         virtual void print_node(const std::string& s) const;
 };
 
@@ -39,14 +40,19 @@ class AstName : public AstVal
 {
     public:
         AstName(std::string* str);
+        AstName(std::string& str);
         ~AstName();
         std::string& getName();
         virtual AstVal* eval();
+        virtual int isFunc();
         virtual double castToDouble();
         virtual int castToInt();
         virtual int isFloat();
+        int isGlobal();
+        void makeGlobal();
     private:
         std::string* name;
+        int global;
 };
 
 class AstStr : public AstVal
@@ -56,6 +62,7 @@ class AstStr : public AstVal
         AstStr(std::string& str);
         ~AstStr();
         virtual AstVal* eval();
+        virtual int isFunc();
         virtual double castToDouble();
         virtual int castToInt();
         virtual int isFloat();
@@ -70,6 +77,7 @@ class AstInt : public AstVal
         AstInt(AstInt* n);
         virtual ~AstInt();
         virtual AstVal* eval(); 
+        virtual int isFunc();
         virtual int isFloat();
         virtual double castToDouble();
         virtual int castToInt();
@@ -82,6 +90,7 @@ class AstDouble : public AstVal
         AstDouble(double n); 
         AstDouble(AstDouble* n); 
         virtual ~AstDouble();
+        virtual int isFunc();
         virtual AstVal* eval();
         virtual int isFloat();
         virtual double castToDouble();
@@ -117,6 +126,32 @@ class AstReturn: public AstSuite
     public:
         AstReturn(Ast* Node);
         virtual AstVal* eval();
+};
+
+
+class AstFunc: public AstVal
+{
+    public:
+        AstFunc(AstSuite* def);
+        ~AstFunc();
+        virtual AstVal* eval();
+        virtual void print_node(const std::string& s) const;
+        virtual double castToDouble();
+        virtual int castToInt();
+        virtual int isFloat();
+        virtual int isFunc();
+    private:
+        AstSuite* def;
+};
+
+class AstFuncdef : public AstNode
+{
+    public:
+        AstFuncdef(AstName* n, AstSuite* nnode);
+        ~AstFuncdef();
+        virtual AstVal* eval();
+        virtual void print_node(const std::string& s) const;
+    private:
 };
 
 

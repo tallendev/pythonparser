@@ -133,7 +133,7 @@ comment   #.*
 
 {comment}                   { ; }
 
-{newline}                   { BEGIN(INDENTING); if(encmatching <= 0) return NEWLINE;  }
+{newline}                   { BEGIN(INDENTING); if(encmatching <= 0)  return NEWLINE; }
 
 <INDENTING>^{spaces}        { int t = handle_indent(yyleng); if( t > 0 ) return t; }
 <INDENTING>^.               { int t = handle_indent(0);  if( t > 0 ) return t; }

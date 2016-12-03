@@ -51,21 +51,62 @@ AstVal* AstSuite::eval()
     return ret;
 }
 
+AstFuncdef::AstFuncdef(AstName* n, AstSuite* f) : AstNode(n, f) {}
+AstFuncdef::~AstFuncdef() {}
+void AstFuncdef::print_node(const std::string& s) const {}
+AstVal* AstFuncdef::eval()
+{
+    if (!getRight()) throw unsupported_exception();
+    AstName* n = new AstName(((AstName*)getLeft())->getName());
+    // surrender pointers to other node
+    AstVal* f = (AstVal*) new AstFunc((AstSuite*)getRight());
+    SymbolTable::getInstance().insert((AstName*)getLeft(), f);
+    print_node(((AstName*)getLeft())->getName());
+    return n; // return name node i guess? 
+}
+
+AstFunc::AstFunc(AstSuite* f) : AstVal(), def(f) {}
+AstFunc::~AstFunc() { delete def; }
+void AstFunc::print_node(const std::string& s) const
+{
+    ast_out << NODE_ID << "[label=\"" << s << "()" << "\"]" << std::endl;
+}
+AstVal* AstFunc::eval()
+{
+    SymbolTable::getInstance().push();
+    AstVal* ret = getLeft()->eval();
+    SymbolTable::getInstance().pop();
+    return ret;
+}
+int AstFunc::isFloat() { return 0; }
+int AstFunc::isFunc() { return 1; }
+double AstFunc::castToDouble() { throw unsupported_exception(); }
+int AstFunc::castToInt() { throw unsupported_exception(); }
+
+
 // AstReturn
-AstReturn::AstReturn(Ast* node) : AstSuite(node) {};
+AstReturn::AstReturn(Ast* node) : AstSuite(node) {}
 AstVal* AstReturn::eval()
 {
+    if (!getLeft()) throw unsupported_exception();
     return getLeft()->eval();
 }
 
 //AstName
-AstName::AstName(std::string* str) : name(str) {}
+AstName::AstName(std::string* str) : name(str), global(0){}
+AstName::AstName(std::string& str) : name(new std::string(str)), global(0){}
 AstName::~AstName() { delete name; }
 std::string& AstName::getName() { return *name; }
 
+void AstName::makeGlobal()
+{
+    global = 1;
+}
+
 AstVal* AstName::eval() 
-{ 
-    AstVal* temp = SymbolTable::getInstance().lookup(*name);
+{
+    SymbolTable& s = SymbolTable::getInstance();
+    AstVal* temp = s.lookup(this);
     if (temp)
     {
         print_node(*name);
@@ -78,17 +119,30 @@ AstVal* AstName::eval()
     
 }
 
+int AstName::isGlobal()
+{
+    return global;
+}
+
 double AstName::castToDouble()
 {
-    AstVal* val = SymbolTable::getInstance().lookup(*name);
+    AstVal* val = SymbolTable::getInstance().lookup(this);
     double out = val->castToDouble();
     delete val;
     return out;
 }
 
+int AstName::isFunc()
+{
+    AstVal* val = SymbolTable::getInstance().lookup(this);
+    int func = val->isFunc();
+    if (!func) delete val;
+    return func;
+}
+
 int AstName::castToInt()
 {
-    AstVal* val = SymbolTable::getInstance().lookup(*name);
+    AstVal* val = SymbolTable::getInstance().lookup(this);
     int out = val->castToInt();
     delete val;
     return out;
@@ -96,7 +150,7 @@ int AstName::castToInt()
 
 int AstName::isFloat()
 {
-    AstVal* val = SymbolTable::getInstance().lookup(*name);
+    AstVal* val = SymbolTable::getInstance().lookup(this);
     int out = 0;
     if (val)
     {
@@ -115,6 +169,8 @@ AstVal* AstStr::eval()
 { 
     return new AstStr(*str); 
 }
+
+int AstStr::isFunc() { return 0; }
 
 double AstStr::castToDouble()
 {
@@ -156,6 +212,7 @@ int AstInt::castToInt()
     return number;
 }
 
+int AstInt::isFunc() { return 0; }
 
 //AstDouble
 AstDouble::AstDouble(double n) : AstVal(), number(n) {} 
@@ -168,6 +225,7 @@ AstVal* AstDouble::eval()
     return new AstDouble(this); 
 }
 
+int AstDouble::isFunc() { return 0; }
 int AstDouble::isFloat()
 {
     return 1;
@@ -244,8 +302,7 @@ AstVal* AstAssign::eval()
     AstVal* r = getRight()->eval();
     AstVal* b;
     AstVal* retval;
-    std::string& name = l->getName();
-    AstVal* val = SymbolTable::getInstance().lookup(name);
+    AstVal* val = SymbolTable::getInstance().lookup(l);
     if (!val)
     {
         throw name_exception();
@@ -261,11 +318,11 @@ AstVal* AstAssign::eval()
     b = retval->eval();
     if (b->isFloat())
     {
-        SymbolTable::getInstance().insert(name, new AstDouble(b->castToDouble()));
+        SymbolTable::getInstance().insert(l, new AstDouble(b->castToDouble()));
     }
     else
     {
-        SymbolTable::getInstance().insert(name, new AstInt(b->castToInt()));
+        SymbolTable::getInstance().insert(l, new AstInt(b->castToInt()));
     }
     delete retval;
     delete val;
@@ -309,7 +366,6 @@ AstVal* AstEqual::eval()
     AstVal* r = getRight()->eval();
     AstVal* retval;
     AstVal* b;
-    std::string& name = l->getName();
     if (r->isFloat())
     {
         retval = real_eval(0.0, r->castToDouble());
@@ -321,11 +377,11 @@ AstVal* AstEqual::eval()
     b = retval->eval();
     if (b->isFloat())
     {
-        SymbolTable::getInstance().insert(name, new AstDouble(b->castToDouble()));
+        SymbolTable::getInstance().insert(l, new AstDouble(b->castToDouble()));
     }
     else
     {
-        SymbolTable::getInstance().insert(name, new AstInt(b->castToInt()));
+        SymbolTable::getInstance().insert(l, new AstInt(b->castToInt()));
     }
     delete retval;
     delete r;

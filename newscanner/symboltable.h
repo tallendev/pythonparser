@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <map>
+#include <list>
 #include "ast.h"
 
 class SymbolTable
@@ -14,14 +15,15 @@ class SymbolTable
         SymbolTable(SymbolTable const&) = delete;
         void operator=(SymbolTable const&) = delete;
         
-        AstVal* lookup(const std::string& key);
-
-        void insert(const std::string& key, AstVal* val);
+        AstVal* lookup(AstName* name);
+        void push();
+        void pop();
+        void insert(AstName* name, AstVal* val);
 
     private:
         ~SymbolTable(); 
         // let string be literal to avoid memory mixups
-        std::map<std::string, AstVal*> table;
+        std::list<std::map<std::string, AstVal*>> tables;
         SymbolTable();
 };
 

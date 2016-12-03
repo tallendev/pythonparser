@@ -6,7 +6,7 @@ LEXFLAGS = -Wno-unused
 
 #LEXDEBUG = -d
 LEXDEBUG =
-YACCDEBUG = -vtd
+YACCDEBUG = -vtd --debug --verbose
 
 OBJS = main.o parse.tab.o ast.o symboltable.o lex.yy.o
 
@@ -30,6 +30,7 @@ lex.yy.o: lex.yy.c
 	$(CCC) $(CFLAGS) $(LEXFLAGS) -c lex.yy.c
 
 %.o : %.cpp
+	echo $<
 	$(CCC) $(CFLAGS) -o $@ -c $< 
 
 clean:
