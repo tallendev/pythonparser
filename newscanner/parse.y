@@ -19,10 +19,36 @@
     std::vector<const char*> except_list;
     std::ofstream ast_out;
     int num_calclist = 0;
+    void go(Ast* a)
+    {
+        if (a)
+        {
+            try
+            {
+                ast_out << "digraph ast" << num_calclist++ << " {" << std::endl;
+                AstVal* v = a->eval();
+                // $1 may be a func definition
+                if (v && !v->isFunc())
+                    delete v; 
+                ast_out << "}" << std::endl;;
+                delete a;
+            }
+            catch (std::exception& e)
+            {
+                except_list.push_back(e.what());
+            }
+        }
+        // if there are exceptions, print the first and dump all
+        if (!except_list.empty())
+        {
+            std::cout << except_list.front() << std::endl;
+            except_list.clear();
+        }
+    }
 %}
 
+
 %union {
-  //std::string* str;
   Ast* ast;
   //behavior
   Ast* (*b) (Ast*, Ast*);
@@ -48,7 +74,7 @@
               STRING TILDE TRY VBAREQUAL WHILE WITH YIELD
 
 %type <ast>  testlist1 file_input pick_NEWLINE_stmt star_NEWLINE_stmt decorator opt_arglist decorators decorated funcdef parameters varargslist opt_EQUAL_test star_fpdef_COMMA opt_DOUBLESTAR_NAME pick_STAR_DOUBLESTAR fpdef fplist stmt simple_stmt small_stmt expr_stmt pick_yield_expr_testlist print_stmt opt_test del_stmt pass_stmt flow_stmt break_stmt continue_stmt return_stmt yield_stmt raise_stmt opt_COMMA_test import_stmt import_name import_from star_DOT plus_DOT pick_STAR_import import_as_name dotted_as_name import_as_names dotted_as_names dotted_name global_stmt exec_stmt assert_stmt compound_stmt if_stmt star_ELIF while_stmt for_stmt try_stmt plus_except opt_ELSE opt_FINALLY with_stmt star_COMMA_with_item with_item except_clause pick_AS_COMMA opt_AS_COMMA suite plus_stmt testlist_safe old_test old_lambdef test opt_IF_ELSE or_test and_test not_test comparison comp_op expr xor_expr and_expr shift_expr pick_LEFTSHIFT_RIGHTSHIFT arith_expr term factor power star_trailer atom pick_yield_expr_testlist_comp opt_yield_test opt_listmaker opt_dictorsetmaker plus_STRING listmaker testlist_comp lambdef trailer subscriptlist subscript opt_test_only opt_sliceop sliceop exprlist testlist dictorsetmaker pick_comp_for pick_for_test classdef opt_testlist arglist argument opt_comp_for list_iter list_for list_if comp_iter comp_for comp_if encoding_decl yield_expr star_fpdef_notest star_COMMA_expr star_COMMA_fpdef star_COMMA_test star_test_COLON_test star_COMMA_subscript star_COMMA_import_as_name plus_COMMA_test plus_COMMA_old_test dictarg listarg arglist_postlist small_stmt_STAR_OR_SEMI
-%type <ast> opt_test_2 opt_test_3
+%type <ast> single_input opt_test_2 opt_test_3
 //binary lambda
 %type <b>  pick_PLUS_MINUS pick_multop
 %type <ab> augassign
@@ -60,8 +86,9 @@
 %%
 
 start
-	: file_input 
+	: file_input
 	| encoding_decl
+    | single_input
 	;
 //single_input // Used in: start
 //	: NEWLINE
@@ -72,6 +99,7 @@ start
 single_input // Used in: start
 	: NEWLINE
 	| stmt
+    ;
 file_input // Used in: start
 	: star_NEWLINE_stmt ENDMARKER
 	;
@@ -79,29 +107,7 @@ pick_NEWLINE_stmt // Used in: star_NEWLINE_stmt
 	: NEWLINE
 	| stmt
     {
-        if ($1)
-        {
-            try
-            {
-                ast_out << "digraph ast" << num_calclist++ << " {" << std::endl;
-                AstVal* v = $1->eval();
-                // $1 may be a func definition
-                if (v && !v->isFunc())
-                    delete v; 
-                ast_out << "}" << std::endl;;
-                delete $1;
-            }
-            catch (std::exception& e)
-            {
-                except_list.push_back(e.what());
-            }
-        }
-        // if there are exceptions, print the first and dump all
-        if (!except_list.empty())
-        {
-            std::cout << except_list.front() << std::endl;
-            except_list.clear();
-        }
+        go($$);
     }
 	;
 
@@ -140,7 +146,7 @@ varargslist // Used in: parameters, old_lambdef, lambdef
 	| fpdef opt_EQUAL_test star_COMMA_fpdef
 	;
 opt_EQUAL_test // Used in: varargslist, star_fpdef_COMMA, star_COMMA_fpdef
-	: EQUAL test { }
+	: EQUAL test
 	| %empty { $$ = 0; }
 	;
 star_fpdef_COMMA // Used in: varargslist, star_fpdef_COMMA
@@ -720,6 +726,7 @@ lambdef // Used in: test
 	;
 trailer // Used in: star_trailer
 	: LPAR opt_arglist RPAR
+    { $$ = $2; }
 	| LSQB subscriptlist RSQB
 	| DOT NAME
 	;

@@ -376,6 +376,7 @@ AstVal* AstEqual::eval()
     getLeft() && getRight() ? 0 : throw unsupported_exception();
     AstName* l = (AstName*)getLeft();
     AstVal* r = getRight()->eval();
+    if (!r) throw unsupported_exception();
     AstVal* retval;
     AstVal* b;
     if (r->isFloat())

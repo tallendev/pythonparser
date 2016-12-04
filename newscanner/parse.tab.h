@@ -136,9 +136,8 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 24 "parse.y" /* yacc.c:1909  */
+#line 51 "parse.y" /* yacc.c:1909  */
 
-  //std::string* str;
   Ast* ast;
   //behavior
   Ast* (*b) (Ast*, Ast*);
@@ -147,7 +146,7 @@ union YYSTYPE
   //assign behavior
   Ast* (*ab) (AstName*, Ast*);
 
-#line 151 "parse.tab.h" /* yacc.c:1909  */
+#line 150 "parse.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

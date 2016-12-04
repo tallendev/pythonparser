@@ -34,7 +34,7 @@ int main(int argc, char * argv[]) {
   std::stringstream ss;
   ss << "ast" << num_calclist++ << ".gv";
   ast_out.open(ss.str().c_str());
-  yydebug = 0;//1;
+  yydebug = 0;
   int parseErrors = yyparse();
   if ( parseErrors ) {
     std::cerr << "Abnormal termination" << std::endl;

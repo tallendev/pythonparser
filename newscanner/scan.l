@@ -129,22 +129,46 @@ comment   #.*
 %%
 
 <INITIAL,INDENTING>^{ws}*{comment}{newline}  { BEGIN(INDENTING); }
-"^{ws}*"{newline}           { BEGIN(INDENTING); return NEWLINE; }
+"^{ws}*"{newline}           { 
+                              BEGIN(INDENTING);            
+                              if(encmatching <= 0)
+                              {
+                                  if (strlen(yytext) == 1)
+                                  {
+                                      unput('\n');
+                                  }
+                                  return NEWLINE; 
+                              }
+                            }
 
 {comment}                   { ; }
 
 {newline}                   { 
                               BEGIN(INDENTING);
-                              if(encmatching <= 0);
+                              if(encmatching <= 0)
                               {
+                                  if (strlen(yytext) == 1)
+                                  {
+                                      unput('\n');
+                                  }
                                   return NEWLINE; 
                               }
                             }
 
 <INDENTING>^{spaces}        { int t = handle_indent(yyleng); if( t > 0 ) return t; }
 <INDENTING>^.               { int t = handle_indent(0);  if( t > 0 ) return t; }
-<INDENTING>^{ws}*{newline}  { /* Entirely blank line: do nothing */ }
-<INDENTING>{newline}        { /* Entirely blank line: do nothing */ }
+<INDENTING>^{ws}*{newline}  { /* Entirely blank line: do nothing */
+                                  if (strlen(yytext) == 1)
+                                  {
+                                      return NEWLINE;
+                                  }
+                             }
+<INDENTING>{newline}        { /* Entirely blank line: do nothing */ 
+                                  if (strlen(yytext) == 1)
+                                  {
+                                      return NEWLINE;
+                                  }
+                            }
 
 {spaces}                    { ; }
 "\\"{newline}               {  /* Explicit line joining: throw it away */ ;  }
