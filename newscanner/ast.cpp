@@ -57,11 +57,12 @@ void AstFuncdef::print_node(const std::string& s) const {}
 AstVal* AstFuncdef::eval()
 {
     if (!getRight()) throw unsupported_exception();
-    AstName* n = new AstName(((AstName*)getLeft())->getName());
+    AstName* name = ((AstName*)getLeft());
+    AstName* n = new AstName(name->getName());
     // surrender pointers to other node
     AstVal* f = (AstVal*) new AstFunc((AstSuite*)getRight());
-    SymbolTable::getInstance().insert((AstName*)getLeft(), f);
-    print_node(((AstName*)getLeft())->getName());
+    SymbolTable::getInstance().insert(name, f);
+    print_node(name->getName());
     return n; // return name node i guess? 
 }
 
@@ -74,7 +75,7 @@ void AstFunc::print_node(const std::string& s) const
 AstVal* AstFunc::eval()
 {
     SymbolTable::getInstance().push();
-    AstVal* ret = getLeft()->eval();
+    AstVal* ret = def->eval();
     SymbolTable::getInstance().pop();
     return ret;
 }
@@ -106,9 +107,18 @@ void AstName::makeGlobal()
 AstVal* AstName::eval() 
 {
     SymbolTable& s = SymbolTable::getInstance();
+    if (isGlobal())
+    {
+        s.globalize(this);
+        global = 0;
+    }
     AstVal* temp = s.lookup(this);
     if (temp)
     {
+        if (temp->isFunc())
+        {
+            temp = temp->eval();
+        }
         print_node(*name);
         return temp;
     }
@@ -127,6 +137,7 @@ int AstName::isGlobal()
 double AstName::castToDouble()
 {
     AstVal* val = SymbolTable::getInstance().lookup(this);
+    if (val->isFunc()) throw unsupported_exception();
     double out = val->castToDouble();
     delete val;
     return out;
@@ -143,6 +154,7 @@ int AstName::isFunc()
 int AstName::castToInt()
 {
     AstVal* val = SymbolTable::getInstance().lookup(this);
+    if (val->isFunc()) throw unsupported_exception();
     int out = val->castToInt();
     delete val;
     return out;
@@ -152,7 +164,7 @@ int AstName::isFloat()
 {
     AstVal* val = SymbolTable::getInstance().lookup(this);
     int out = 0;
-    if (val)
+    if (val && !val->isFunc())
     {
         out = val->isFloat();
         delete val;

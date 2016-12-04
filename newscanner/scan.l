@@ -54,8 +54,8 @@
 #define YY_USER_ACTION yylval.ast = NULL;
 %}
 
-%option yylineno
 %option noyywrap
+%option yylineno
 number    {integer}|{longinteger}|{floatnumber}|{imagnumber}
 
 imagnumber     {imaghead}[jJ]
@@ -129,16 +129,22 @@ comment   #.*
 %%
 
 <INITIAL,INDENTING>^{ws}*{comment}{newline}  { BEGIN(INDENTING); }
-"^{ws}*"{newline}           { BEGIN(INDENTING); }
+"^{ws}*"{newline}           { BEGIN(INDENTING); return NEWLINE; }
 
 {comment}                   { ; }
 
-{newline}                   { BEGIN(INDENTING); if(encmatching <= 0)  return NEWLINE; }
+{newline}                   { 
+                              BEGIN(INDENTING);
+                              if(encmatching <= 0);
+                              {
+                                  return NEWLINE; 
+                              }
+                            }
 
 <INDENTING>^{spaces}        { int t = handle_indent(yyleng); if( t > 0 ) return t; }
 <INDENTING>^.               { int t = handle_indent(0);  if( t > 0 ) return t; }
-<INDENTING>^{ws}*{newline}  { /* Entirely blank line: do nothing */; }
-<INDENTING>{newline}        { /* Entirely blank line: do nothing */; }
+<INDENTING>^{ws}*{newline}  { /* Entirely blank line: do nothing */ }
+<INDENTING>{newline}        { /* Entirely blank line: do nothing */ }
 
 {spaces}                    { ; }
 "\\"{newline}               {  /* Explicit line joining: throw it away */ ;  }
@@ -358,3 +364,4 @@ static void right_enclose(void)
 {
     --encmatching;
 }
+

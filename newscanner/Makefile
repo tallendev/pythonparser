@@ -1,12 +1,11 @@
-CCC = clang++
+CCC = g++
 LEX = flex
 YACC = bison
 CFLAGS = -g -Wall -std=c++11
 LEXFLAGS = -Wno-unused
 
-#LEXDEBUG = -d
-LEXDEBUG =
-YACCDEBUG = -vtd --debug --verbose
+#LEXDEBUG =
+YACCDEBUG = -Wconflicts-sr -vtd
 
 OBJS = main.o parse.tab.o ast.o symboltable.o lex.yy.o
 
