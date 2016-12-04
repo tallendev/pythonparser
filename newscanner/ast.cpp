@@ -32,17 +32,17 @@ void AstVal::print_node(const std::string& s) const
     ast_out << NODE_ID << "[label=\"" << s << "\"]" << std::endl;
 }
 
-AstSuite::AstSuite(Ast* node) : AstNode(node, nullptr) {}
+AstSuite::AstSuite(Ast* node) : AstNode(nullptr, node) {}
 AstSuite::AstSuite(Ast* node, AstSuite* nnode) : AstNode(node, nnode) {}
-AstSuite::~AstSuite() { delete getLeft(); if(getRight()) delete getRight(); }
+AstSuite::~AstSuite() { if (getLeft()) delete getLeft(); if (getRight()) delete getRight(); }
 void AstSuite::print_node(const std::string& s) const { }
 AstVal* AstSuite::eval()
 {
-    if (!getLeft())
+    if (getLeft())
     {
-        throw unsupported_exception();
+        delete getLeft()->eval();
+        //throw unsupported_exception();
     }
-    delete getLeft()->eval();
     AstVal* ret = nullptr;
     if (getRight())
     {
@@ -89,8 +89,8 @@ int AstFunc::castToInt() { throw unsupported_exception(); }
 AstReturn::AstReturn(Ast* node) : AstSuite(node) {}
 AstVal* AstReturn::eval()
 {
-    if (!getLeft()) throw unsupported_exception();
-    return getLeft()->eval();
+    if (!getRight()) throw unsupported_exception();
+    return getRight()->eval();
 }
 
 //AstName

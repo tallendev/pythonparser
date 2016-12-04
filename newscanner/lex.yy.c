@@ -1573,13 +1573,14 @@ YY_RULE_SETUP
 #line 262 "scan.l"
 { 
              ++identifiers; 
+             std::string s = std::string(yytext, yyleng);
              yylval.ast = new AstName(new std::string(yytext, yyleng));
              return NAME; 
            }
 	YY_BREAK
 case YY_STATE_EOF(INDENTING):
 case YY_STATE_EOF(INITIAL):
-#line 268 "scan.l"
+#line 269 "scan.l"
 {
              int t = calc_indent_change(0);
              BEGIN(FINISHING);
@@ -1590,7 +1591,7 @@ case YY_STATE_EOF(INITIAL):
 case 98:
 /* rule 98 can match eol */
 YY_RULE_SETUP
-#line 274 "scan.l"
+#line 275 "scan.l"
 {
              int t = calc_indent_change(0);
              unput('\n');
@@ -1606,27 +1607,27 @@ YY_RULE_SETUP
 	YY_BREAK
 case YY_STATE_EOF(LONG_STRING):
 case YY_STATE_EOF(LONG_STRING2):
-#line 288 "scan.l"
+#line 289 "scan.l"
 
 	YY_BREAK
 
 case 99:
 YY_RULE_SETUP
-#line 290 "scan.l"
+#line 291 "scan.l"
 
 	YY_BREAK
 
 case 100:
 YY_RULE_SETUP
-#line 292 "scan.l"
+#line 293 "scan.l"
 { display_error("unexpected character"); }
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 295 "scan.l"
+#line 296 "scan.l"
 ECHO;
 	YY_BREAK
-#line 1630 "lex.yy.c"
+#line 1631 "lex.yy.c"
 case YY_STATE_EOF(FINISHING):
 	yyterminate();
 
@@ -2641,7 +2642,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 295 "scan.l"
+#line 296 "scan.l"
 
 
 
