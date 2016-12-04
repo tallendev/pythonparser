@@ -58,12 +58,12 @@ AstVal* AstFuncdef::eval()
 {
     if (!getRight()) throw unsupported_exception();
     AstName* name = ((AstName*)getLeft());
-    AstName* n = new AstName(name->getName());
     // surrender pointers to other node
     AstVal* f = (AstVal*) new AstFunc((AstSuite*)getRight());
     SymbolTable::getInstance().insert(name, f);
     print_node(name->getName());
-    return n; // return name node i guess? 
+    delete name;
+    return nullptr; // return name node i guess? 
 }
 
 AstFunc::AstFunc(AstSuite* f) : AstVal(), def(f) {}

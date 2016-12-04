@@ -262,7 +262,7 @@ comment   #.*
 {name}     { 
              ++identifiers; 
              std::string s = std::string(yytext, yyleng);
-             yylval.ast = new AstName(new std::string(yytext, yyleng));
+             yylval.ast = new AstName(s);
              return NAME; 
            }
 
