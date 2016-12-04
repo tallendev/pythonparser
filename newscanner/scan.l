@@ -147,10 +147,6 @@ comment   #.*
                               BEGIN(INDENTING);
                               if(encmatching <= 0)
                               {
-                                  if (strlen(yytext) == 1)
-                                  {
-                                      unput('\n');
-                                  }
                                   return NEWLINE; 
                               }
                             }
@@ -158,16 +154,8 @@ comment   #.*
 <INDENTING>^{spaces}        { int t = handle_indent(yyleng); if( t > 0 ) return t; }
 <INDENTING>^.               { int t = handle_indent(0);  if( t > 0 ) return t; }
 <INDENTING>^{ws}*{newline}  { /* Entirely blank line: do nothing */
-                                  if (strlen(yytext) == 1)
-                                  {
-                                      return NEWLINE;
-                                  }
                              }
 <INDENTING>{newline}        { /* Entirely blank line: do nothing */ 
-                                  if (strlen(yytext) == 1)
-                                  {
-                                      return NEWLINE;
-                                  }
                             }
 
 {spaces}                    { ; }
